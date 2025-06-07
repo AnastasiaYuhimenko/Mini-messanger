@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from db.base import Base
+from sqlalchemy import Column, Integer, String
+from ..db.base import Base
 
 
 class User(Base):
@@ -9,4 +9,3 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     phone_number = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    timestamp = Column(DateTime)
