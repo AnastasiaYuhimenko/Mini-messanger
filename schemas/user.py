@@ -23,6 +23,11 @@ class UserCreate(BaseModel):
         return value
 
 
+class UserLogin(BaseModel):
+    phone_number: PhoneStr
+    password: str
+
+
 class UserRead(BaseModel):
     id: int
     username: str

@@ -11,5 +11,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # копирую всеееее
 COPY . .
 
+ENV PYTHONPATH=/app
+
 # запускаю
 CMD ["fastapi", "dev", "app/main.py"]

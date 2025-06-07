@@ -1,18 +1,18 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy.future import select
-from ..schemas.user import UserCreate
+from fastapi import APIRouter, Depends, status
+from ..schemas.user import UserCreate, UserLogin
 from ..db.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from passlib.context import CryptContext
+from ..services.users import register, login, get_current_user
+from fastapi import HTTPException
+from sqlalchemy.future import select
 from ..models.user import User
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 
 router = APIRouter()
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+bearer_scheme = HTTPBearer()
 
 
 @router.post("/register/", tags=["users"], status_code=status.HTTP_201_CREATED)
@@ -34,13 +34,28 @@ async def register_new_user(user: UserCreate, db: AsyncSession = Depends(get_ses
             status_code=400,
             detail="Пользователь с таким именем уже существует, придумайте другое имя",
         )
-    new_user = User(
-        username=user.username,
-        phone_number=user.phone_number,
-        hashed_password=hash_password(user.password),
-    )
-
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
+    await register(user=user, db=db)
     return {"message": "Пользователь создан"}
+
+
+@router.post("/login/", tags=["users"], status_code=status.HTTP_200_OK)
+async def login_user(user: UserLogin, db: AsyncSession = Depends(get_session)):
+    user_excist = (
+        (await db.execute(select(User).where(User.phone_number == user.phone_number)))
+        .scalars()
+        .first()
+    )
+    if not user_excist:
+        raise HTTPException(status_code=404, detail="Такого пользователя не существует")
+
+    password_correct = user_excist.hashed_password
+
+    return await login(user=user, hashed_password=password_correct)
+
+
+@router.get("/authorize/", tags=["users"], status_code=status.HTTP_200_OK)
+async def authorize_user(
+    token: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_session),
+):
+    return await get_current_user(token=token, db=db)

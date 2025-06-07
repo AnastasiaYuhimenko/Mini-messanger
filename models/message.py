@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, func
 from db.base import Base
-from datetime import datetime
 from sqlalchemy import DateTime
 
 
@@ -11,4 +10,4 @@ class Message(Base):
     chat_id = Column(Integer, index=True)
     sender_id = Column(Integer, index=True)
     text = Column(String)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, server_default=func.now())
