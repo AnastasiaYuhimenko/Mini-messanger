@@ -34,7 +34,6 @@ def hash_password(password: str) -> str:
 async def register(user, db):
     new_user = User(
         username=user.username,
-        phone_number=user.phone_number,
         hashed_password=hash_password(user.password),
     )
 
@@ -49,7 +48,7 @@ async def login(user, hashed_password):
     ):
         raise HTTPException(status_code=400, detail="Неверный пароль")
 
-    access_token = create_access_token(data={"sub": str(user.phone_number)})
+    access_token = create_access_token(data={"sub": str(user.username)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -58,13 +57,13 @@ async def get_current_user(token, db):
         payload = jwt.decode(
             token.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        phone_number: str = payload.get("sub")
-        if phone_number is None:
+        username: str = payload.get("sub")
+        if username is None:
             raise HTTPException(status_code=401, detail="Invalid token")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    result = await db.execute(select(User).where(User.phone_number == phone_number))
+    result = await db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
     if user is None:
         raise HTTPException(status_code=400, detail="Не авторизован")

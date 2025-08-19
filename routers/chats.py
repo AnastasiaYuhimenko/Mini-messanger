@@ -9,6 +9,7 @@ from ..services.users import get_current_user
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from ..services.chats import create_chat
+from sqlalchemy import or_, and_
 
 bearer_scheme = HTTPBearer()
 router = APIRouter()
@@ -33,7 +34,10 @@ async def new_chat(
 
     chat_excist = await db.execute(
         select(scheme_chat).where(
-            scheme_chat.user1_id == user_id, scheme_chat.user2_id == user2id
+            or_(
+                and_(scheme_chat.user1_id == user_id, scheme_chat.user2_id == user2id),
+                and_(scheme_chat.user1_id == user2id, scheme_chat.user2_id == user_id),
+            )
         )
     )
     if chat_excist.scalar_one_or_none():

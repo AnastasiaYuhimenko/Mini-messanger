@@ -1,12 +1,7 @@
-from typing import Annotated
-from pydantic import BaseModel, StringConstraints, field_validator
-
-
-PhoneStr = Annotated[str, StringConstraints(pattern=r"^\+7\d{10}$")]
+from pydantic import BaseModel, field_validator
 
 
 class UserCreate(BaseModel):
-    phone_number: PhoneStr
     username: str
     password: str
 
@@ -24,11 +19,10 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    phone_number: PhoneStr
+    username: str
     password: str
 
 
 class UserRead(BaseModel):
     id: int
     username: str
-    phone_number: PhoneStr
